@@ -1,6 +1,6 @@
 {
   "name": "dsh-subagent-qoder",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "One-shot Qoder subagent provider for DeepSeek Harness over the official Qoder Agent SDK",
   "type": "module",
   "license": "MIT",
