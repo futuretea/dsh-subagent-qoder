@@ -11,7 +11,7 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, relative, sep } from 'node:path'
+import { dirname, join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { bundlePatchPaths, loadOverlayPatches } from '@deepseek-ai/dsh-app-boot'
 import {
@@ -86,6 +86,7 @@ try {
     throw new Error('packed package.json has no name')
   }
   const installed = join(nodeModules, manifest.name)
+  mkdirSync(dirname(installed), { recursive: true })
   renameSync(packageDir, installed)
   symlinkSync(join(root, 'node_modules', '@deepseek-ai'), join(nodeModules, '@deepseek-ai'))
   writeShim(join(nodeModules, '@qoder-ai', 'qoder-agent-sdk'))

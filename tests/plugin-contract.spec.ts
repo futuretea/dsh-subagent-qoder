@@ -53,6 +53,20 @@ function row(name = `'${pkgName}'`, extra = ''): string {
   return `- insert:\n    - id: ${PLUGIN_NAME}\n      name: ${name}${extra}\n`
 }
 
+function expectRequiredRows(text: string): void {
+  const parsed = loadPatch(text)
+  expect(registersPackage(parsed, PLUGIN_NAME, pkgName)).toBe(true)
+  expect(registersPackage(parsed, TOOL_INSERT_ID, TOOL_PACKAGE)).toBe(true)
+  const self = insertRows(parsed).find((entry) => entry.id === PLUGIN_NAME && entry.name === pkgName)
+  const tool = insertRows(parsed).find((entry) => entry.id === TOOL_INSERT_ID && entry.name === TOOL_PACKAGE)
+  expect(self?.config).toEqual({ providerName: 'qoder' })
+  expect(tool?.config).toEqual({
+    provider: 'qoder',
+    toolName: 'subagent_qoder',
+    maxDepth: 'provider-managed',
+  })
+}
+
 beforeEach(() => {
   calls.length = 0
 })
@@ -124,17 +138,20 @@ describe('cordis.patch.yml', () => {
   })
 
   it('registers this package and keeps the tool insert', () => {
-    const parsed = loadPatch(readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8'))
-    expect(registersPackage(parsed, PLUGIN_NAME, pkgName)).toBe(true)
-    expect(registersPackage(parsed, TOOL_INSERT_ID, TOOL_PACKAGE)).toBe(true)
-    const rows = insertRows(parsed)
-    expect(rows).toHaveLength(2)
-    expect(rows[0]?.config).toEqual({ providerName: 'qoder' })
-    expect(rows[1]?.config).toEqual({
-      provider: 'qoder',
-      toolName: 'subagent_qoder',
-      maxDepth: 'provider-managed',
-    })
+    expectRequiredRows(readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8'))
+  })
+
+  it('accepts a leading insert before the required rows', () => {
+    const real = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
+    expectRequiredRows(real.replace(
+      '- insert:\n',
+      '- insert:\n    - id: tool-extra\n      name: other-pkg\n',
+    ))
+  })
+
+  it('accepts an extra insert after the required rows', () => {
+    const real = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
+    expectRequiredRows(`${real.trimEnd()}\n    - id: tool-later\n      name: other-pkg\n`)
   })
 
   it('accepts a single-quoted package name', () => {
@@ -162,7 +179,7 @@ describe('cordis.patch.yml', () => {
 
   it('accepts an extra insert beside this plugin', () => {
     const parsed = loadPatch(`${row().trimEnd()}\n    - id: tool-extra\n      name: other-pkg\n`)
-    expect(insertRows(parsed)).toHaveLength(2)
+    expect(insertRows(parsed).some((entry) => entry.id === 'tool-extra' && entry.name === 'other-pkg')).toBe(true)
     expect(registersPackage(parsed, PLUGIN_NAME, pkgName)).toBe(true)
   })
 
