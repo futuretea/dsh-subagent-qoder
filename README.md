@@ -41,12 +41,12 @@ The PAT is read from the dsh host process environment (or `env` entries) by the 
 
 ```sh
 pnpm install
-pnpm run lint && pnpm run typecheck && pnpm test && pnpm run build
+pnpm run lint && pnpm run typecheck && pnpm test && pnpm run test:package
 ```
 
 The `@deepseek-ai/dsh-*` dev dependencies resolve from the npm registry; to develop against a local harness checkout, swap them to `link:` paths pointing into it. Real-API checks need `QODER_PERSONAL_ACCESS_TOKEN`.
 
-CI runs the same chain on pushes to `main` and on pull requests (`.github/workflows/pr-checks.yml`). Pushing a `vX.Y.Z` tag whose version matches `package.json` builds, checks, and publishes the package to npm via Trusted Publishing (`.github/workflows/release.yml`).
+Pull requests run lint, typecheck, the source tests, and `pnpm run test:package` (`.github/workflows/pr-checks.yml`). `test:package` builds, packs with `--ignore-scripts`, and loads that tarball through its public export. Pushing a `vX.Y.Z` tag whose version matches `package.json` builds, checks, and publishes the package to npm via Trusted Publishing (`.github/workflows/release.yml`).
 
 ## Known limitations
 
